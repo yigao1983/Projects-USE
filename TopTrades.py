@@ -65,8 +65,6 @@ class TopTrades(object):
             
         except Exception as e:
             print(e)
-        
-        return self
     
     def get_quote(self):
         
@@ -84,8 +82,6 @@ class TopTrades(object):
             
         except Exception as e:
             print(e)
-        
-        return self
     
     def get_trade_quote(self, tq_csv=None):
         
@@ -104,8 +100,6 @@ class TopTrades(object):
             self.__tq_df['spread_to_price'] = self.__tq_df.spread / self.__tq_df.price
             
             self.__tq_df.to_csv('tq_df_{}_{}.csv'.format(self.__date_beg, self.__date_end)) 
-        
-        return self
     
     def get_spread(self):
         
@@ -115,8 +109,6 @@ class TopTrades(object):
         self.__sp_df = self.__tq_df.groupby(level=0).agg(ff)
         
         self.__sp_df.to_csv('sp_df_{}_{}.csv'.format(self.__date_beg, self.__date_end))
-        
-        return self
         
     def plot_spread(self):
         
@@ -130,7 +122,7 @@ if __name__ == "__main__":
     
     date_beg = '2015.01.01'
     date_end = '2015.12.31'
-    num_top = 100
+    num_top = 10000
     
     kwargs = {"hostname": "kdb1", "portnum": 10101, "username": "ygao", "password": "Password23",
               "database": "/data/db_tdc_us_equities_nbbo", "trades": "trades", "quotes": "quotes"}
