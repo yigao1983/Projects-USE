@@ -122,7 +122,7 @@ if __name__ == "__main__":
     
     date_beg = '2015.01.01'
     date_end = '2015.12.31'
-    num_top = 10000
+    num_top = 100
     
     kwargs = {"hostname": "kdb1", "portnum": 10101, "username": "ygao", "password": "Password23",
               "database": "/data/db_tdc_us_equities_nbbo", "trades": "trades", "quotes": "quotes"}
