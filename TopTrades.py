@@ -65,6 +65,8 @@ class TopTrades(object):
             
         except Exception as e:
             print(e)
+        
+        return self
     
     def get_quote(self):
         
@@ -82,6 +84,8 @@ class TopTrades(object):
             
         except Exception as e:
             print(e)
+        
+        return self
     
     def get_trade_quote(self, tq_csv=None):
         
@@ -100,6 +104,8 @@ class TopTrades(object):
             self.__tq_df['spread_to_price'] = self.__tq_df.spread / self.__tq_df.price
             
             self.__tq_df.to_csv('tq_df_{}_{}.csv'.format(self.__date_beg, self.__date_end)) 
+        
+        return self
     
     def get_spread(self):
         
@@ -109,6 +115,8 @@ class TopTrades(object):
         self.__sp_df = self.__tq_df.groupby(level=0).agg(ff)
         
         self.__sp_df.to_csv('sp_df_{}_{}.csv'.format(self.__date_beg, self.__date_end))
+        
+        return self
         
     def plot_spread(self):
         
