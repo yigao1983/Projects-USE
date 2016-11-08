@@ -6,11 +6,10 @@ import matplotlib.pyplot as plt
 
 class TopTrades(object):
     
-    def __init__(self, date_beg, date_end, num_top, **kwargs):
+    def __init__(self, date_beg, date_end, **kwargs):
         
         self.__date_beg = str(date_beg)
         self.__date_end = str(date_end)
-        self.__num_top  = num_top
         
         self.__hostname = kwargs["hostname"]
         self.__portnum  = kwargs["portnum"]
@@ -40,11 +39,16 @@ class TopTrades(object):
         
         if self.__q.is_connected():
             self.__q.close()
-    
+     
     @property
     def tq_df(self):
         
         return self.__tq_df
+    
+    @property
+    def sym_df(self):
+        
+        return self.__sym_df
     
     def get_trade(self):
         
@@ -53,11 +57,10 @@ class TopTrades(object):
             self.__q.sync('\l {}'.format(self.__database))
             self.__q.sync('date_beg:{};'.format(self.__date_beg))
             self.__q.sync('date_end:{};'.format(self.__date_end))
-            self.__q.sync('num_top:{}'.format(self.__num_top))
             self.__q.sync('trade_tab:.st.unenum select volume:sum size,notional:sum size*price,price:(size*price) wavg price '
                           'by 1 xbar date,sym from {} where date within (date_beg,date_end),sun_time>08:30:00,sun_time<15:00:00,'
                           'price>1,not sym like "*ZZT",not sym like "*.TEST",not sym in `CBO`CBX;'.format(self.__trades))
-            self.__q.sync('sym_lst:distinct exec sym from num_top#`tot_notional xdesc .st.unenum select tot_notional:sum notional '
+            self.__q.sync('sym_lst:distinct exec sym from `tot_notional xdesc .st.unenum select tot_notional:sum notional '
                           'by sym from trade_tab;')
             self.__q.sync('trade_tab:.st.unenum select from trade_tab where (sym) in (sym_lst);')
             
@@ -65,6 +68,8 @@ class TopTrades(object):
             
         except Exception as e:
             print(e)
+        
+        return self
     
     def get_quote(self):
         
@@ -82,8 +87,10 @@ class TopTrades(object):
             
         except Exception as e:
             print(e)
+        
+        return self
     
-    def get_trade_quote(self, tq_csv=None):
+    def get_trade_quote(self, tq_csv):
         
         if tq_csv and os.path.isfile(tq_csv):
             
@@ -100,6 +107,8 @@ class TopTrades(object):
             self.__tq_df['spread_to_price'] = self.__tq_df.spread / self.__tq_df.price
             
             self.__tq_df.to_csv('tq_df_{}_{}.csv'.format(self.__date_beg, self.__date_end)) 
+        
+        return self
     
     def get_spread(self):
         
@@ -108,27 +117,53 @@ class TopTrades(object):
         
         self.__sp_df = self.__tq_df.groupby(level=0).agg(ff)
         
-        self.__sp_df.to_csv('sp_df_{}_{}.csv'.format(self.__date_beg, self.__date_end))
+        self.__sp_df.to_csv('sp_df_{}_{}_{}.csv'.format(self.__date_beg, self.__date_end, self.__num_top))
         
+        return self
+    
     def plot_spread(self):
         
         self.__sp_df.plot(y='spread_to_price', fontsize=12)
-        plt.savefig('spread_to_price_{}_{}.pdf'.format(self.__date_beg, self.__date_end), bbox_inches='tight')
+        plt.savefig('spread_to_price_{}_{}_{}.pdf'.format(self.__date_beg, self.__date_end, self.__num_top), bbox_inches='tight')
         
         self.__sp_df.plot(y='price', fontsize=12)
-        plt.savefig('price_{}_{}.pdf'.format(self.__date_beg, self.__date_end), bbox_inches='tight')
+        plt.savefig('price_{}_{}_{}.pdf'.format(self.__date_beg, self.__date_end, self.__num_top), bbox_inches='tight')
+        
+        return self
+    
+    def get_symbol_list(self, symbol_csv, num_top):
+        
+        self.__num_top = num_top
+        
+        try:
+            self.__sym_df = pd.read_csv(symbol_csv)
+            ff = lambda x: self.__tq_df[self.__tq_df.index.get_level_values('sym')==x]['notional'].sum()
+            self.__sym_df['notional'] = self.__sym_df['symbol'].apply(ff)
+            self.__sym_df.sort_values(by='notional', ascending=False, inplace=True)
+            self.__sym_df.reset_index(drop=True, inplace=True)
+            self.__sym_df = self.__sym_df[self.__sym_df.index<self.__num_top]
+            self.__sym_df.to_csv('red_symbol_list_{}.csv'.format(self.__num_top))
+        except Exception as e:
+            print(e)
+        
+        return self
+    
+    def remove_trade_quote(self):
+        
+        self.__tq_df = self.__tq_df[self.__tq_df.index.get_level_values('sym').isin(self.__sym_df['symbol'].values)]
+        
+        self.__tq_df.to_csv('red_tq_df_{}_{}_{}.csv'.format(self.__date_beg, self.__date_end, self.__num_top))
+        
+        return self
     
 if __name__ == "__main__":
     
     date_beg = '2015.01.01'
     date_end = '2015.12.31'
-    num_top = 10000
+    num_top = 700
     
     kwargs = {"hostname": "kdb1", "portnum": 10101, "username": "ygao", "password": "Password23",
               "database": "/data/db_tdc_us_equities_nbbo", "trades": "trades", "quotes": "quotes"}
     
-    top = TopTrades(date_beg, date_end, num_top, **kwargs)
-    top.get_trade_quote('tq_df_{}_{}.csv'.format(date_beg, date_end))
-    top.get_spread()
-    
-    top.plot_spread()
+    top = TopTrades(date_beg, date_end, **kwargs).get_trade_quote('tq_df_{}_{}.csv'.format(date_beg, date_end))
+    top.get_symbol_list('symbol_list.csv', num_top).remove_trade_quote().get_spread().plot_spread()
