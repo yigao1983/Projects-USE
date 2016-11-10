@@ -94,6 +94,7 @@ class TopTrades(object):
         
         if tq_csv and os.path.isfile(tq_csv):
             
+            print('File exists.')
             self.__tq_df = pd.read_csv(tq_csv)
             self.__tq_df.date = pd.to_datetime(self.__tq_df.date, format="%Y-%m-%d")
             self.__tq_df.set_index(['date', 'sym'], drop=True, inplace=True)
@@ -112,22 +113,31 @@ class TopTrades(object):
     
     def get_spread(self):
         
-        wa = lambda x: np.average(x, weights=self.__tq_df.loc[x.index, 'notional'])
-        ff = {'price': wa, 'spread_to_price': wa}
+        wn = lambda x: np.average(x, weights=self.__tq_df.loc[x.index, 'notional'])
+        fn = {'price': wn, 'spread_to_price': wn}
         
-        self.__sp_df = self.__tq_df.groupby(level=0).agg(ff)
+        wv = lambda x: np.average(x, weights=self.__tq_df.loc[x.index, 'volume'])
+        fv = {'price': wv, 'spread_to_price': wv}
         
-        self.__sp_df.to_csv('sp_df_{}_{}_{}.csv'.format(self.__date_beg, self.__date_end, self.__num_top))
+        self.__sp_not_df = self.__tq_df.groupby(level=0).agg(fn)
+        self.__sp_vol_df = self.__tq_df.groupby(level=0).agg(fv)
+        
+        self.__sp_not_df.to_csv('sp_not_df_{}_{}_{}.csv'.format(self.__date_beg, self.__date_end, self.__num_top))
+        self.__sp_vol_df.to_csv('sp_vol_df_{}_{}_{}.csv'.format(self.__date_beg, self.__date_end, self.__num_top))
         
         return self
     
     def plot_spread(self):
         
-        self.__sp_df.plot(y='spread_to_price', fontsize=12)
-        plt.savefig('spread_to_price_{}_{}_{}.pdf'.format(self.__date_beg, self.__date_end, self.__num_top), bbox_inches='tight')
+        self.__sp_not_df.plot(y='spread_to_price', fontsize=12)
+        plt.savefig('spread_to_price_not_{}_{}_{}.pdf'.format(self.__date_beg, self.__date_end, self.__num_top), bbox_inches='tight')
+        self.__sp_not_df.plot(y='price', fontsize=12)
+        plt.savefig('price_not_{}_{}_{}.pdf'.format(self.__date_beg, self.__date_end, self.__num_top), bbox_inches='tight')
         
-        self.__sp_df.plot(y='price', fontsize=12)
-        plt.savefig('price_{}_{}_{}.pdf'.format(self.__date_beg, self.__date_end, self.__num_top), bbox_inches='tight')
+        self.__sp_vol_df.plot(y='spread_to_price', fontsize=12)
+        plt.savefig('spread_to_price_vol_{}_{}_{}.pdf'.format(self.__date_beg, self.__date_end, self.__num_top), bbox_inches='tight')
+        self.__sp_vol_df.plot(y='price', fontsize=12)
+        plt.savefig('price_vol_{}_{}_{}.pdf'.format(self.__date_beg, self.__date_end, self.__num_top), bbox_inches='tight')
         
         return self
     
@@ -148,22 +158,23 @@ class TopTrades(object):
         
         return self
     
-    def remove_trade_quote(self):
+    def clean_trade_quote(self):
         
         self.__tq_df = self.__tq_df[self.__tq_df.index.get_level_values('sym').isin(self.__sym_df['symbol'].values)]
-        
+        self.__tq_df = self.__tq_df[(self.__tq_df.spread_to_price<self.__tq_df.spread_to_price.quantile(0.99)) & \
+                                    (self.__tq_df.price>1.0) & (self.__tq_df.price<1000.0)]
         self.__tq_df.to_csv('red_tq_df_{}_{}_{}.csv'.format(self.__date_beg, self.__date_end, self.__num_top))
         
         return self
     
 if __name__ == "__main__":
     
-    date_beg = '2015.01.01'
-    date_end = '2015.12.31'
-    num_top = 700
+    date_beg = '2014.01.01'
+    date_end = '2016.10.31'
+    num_top = 2000
     
     kwargs = {"hostname": "kdb1", "portnum": 10101, "username": "ygao", "password": "Password23",
               "database": "/data/db_tdc_us_equities_nbbo", "trades": "trades", "quotes": "quotes"}
     
     top = TopTrades(date_beg, date_end, **kwargs).get_trade_quote('tq_df_{}_{}.csv'.format(date_beg, date_end))
-    top.get_symbol_list('symbol_list.csv', num_top).remove_trade_quote().get_spread().plot_spread()
+    top.get_symbol_list('symbol_list.csv', num_top).clean_trade_quote().get_spread().plot_spread()
