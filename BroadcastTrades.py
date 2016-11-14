@@ -145,14 +145,14 @@ class BroadcastTrades(object):
     def broadcast(self):
         
         sender = 'ygao@suntradingllc.com'
-        receivers = ['ygao@suntradingllc.com', 'zluo@suntradingllc.com']
+        receivers = ['ygao@suntradingllc.com', 'usemm@suntradingllc.com']
         
         message = multipart.MIMEMultipart('alternative')
-        message['Subject'] = 'Statistics of last trading day ({})'.format(self.__last_date)
+        message['Subject'] = 'Market Statistics of Last Trading Day ({})'.format(self.__last_date)
         
         main_text = """
-        Volume weighted averge spread: ${:<10.4f}
-        SPY 5-tick momentum index:      {:<10.4f}
+        Volume weighted average spread: ${:<10.4f}
+        SPY 5-tick momentum index: {:<10.4f}
         """.format(self.vol_avg_spread(), self.spy_accuracy(self.__spy_df.price, 0.05))
         
         message.attach(text.MIMEText(main_text, 'plain'))
