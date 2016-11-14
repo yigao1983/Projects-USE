@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 import pandas as pd
 import qpython.qconnection as qconn
@@ -142,7 +143,7 @@ class BroadcastTrades(object):
     def broadcast(self):
         
         sender = 'ygao@suntradingllc.com'
-        receivers = ['ygao@suntradingllc.com']
+        receivers = ['ygao@suntradingllc.com', 'zluo@suntradingllc.com']
         
         message = """
         Dear all,
@@ -170,4 +171,4 @@ if __name__ == "__main__":
               "nbbo_database": "/data/db_tdc_us_equities_nbbo", "nbbo_trades": "trades", "nbbo_quotes": "quotes", \
               "itch_database": "/data/db_tdc_us_equities_itch", "itch_trade": "trade"}
     
-    bt = BroadcastTrades(**kwargs).get_trade_quote().get_symbol_list("symbol_list.csv").get_spy_trade().broadcast()
+    bt = BroadcastTrades(**kwargs).get_trade_quote().get_symbol_list(sys.argv[1]).get_spy_trade().broadcast()
