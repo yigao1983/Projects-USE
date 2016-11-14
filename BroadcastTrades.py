@@ -3,6 +3,8 @@ import numpy as np
 import pandas as pd
 import qpython.qconnection as qconn
 import smtplib
+import email.mime.multipart as multipart
+import email.mime.text as text
 
 class BroadcastTrades(object):
     
@@ -145,22 +147,20 @@ class BroadcastTrades(object):
         sender = 'ygao@suntradingllc.com'
         receivers = ['ygao@suntradingllc.com', 'zluo@suntradingllc.com']
         
-        message = """
-        Dear all,
+        message = multipart.MIMEMultipart('alternative')
+        message['Subject'] = 'Statistics of last trading day ({})'.format(self.__last_date)
         
-        Statistics of last trading day ({}) is
-        
+        main_text = """
         Volume weighted averge spread: ${:<10.4f}
-        SPY 5-tick momentum accuracy:   {:<10.4f}
+        SPY 5-tick momentum index:      {:<10.4f}
+        """.format(self.vol_avg_spread(), self.spy_accuracy(self.__spy_df.price, 0.05))
         
-        Best wishes!
+        message.attach(text.MIMEText(main_text, 'plain'))
         
-        Yi
-        """.format(self.__last_date, self.vol_avg_spread(), self.spy_accuracy(self.__spy_df.price, 0.05))
-         
         try:
             smtpObj = smtplib.SMTP('localhost')
-            smtpObj.sendmail(sender, receivers, message)
+            smtpObj.sendmail(sender, receivers, message.as_string())
+            smtpObj.quit()
             print("Successfully sent email")
         except smtplib.SMTPException:
             print("Error: cannot send email")
