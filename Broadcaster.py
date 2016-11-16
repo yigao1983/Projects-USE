@@ -186,8 +186,8 @@ class Broadcaster(object):
         #Volume weighted average spread of last trading day: ${:<10.4f}
         main_text = """
         Volume weighted average spread of last trading day: ${:<10.4f}
-        Volume weighted average spread of recent 5 trading day: ${:<10.4f}
-        Volume weighted average spread of recent 20 trading day: ${:<10.4f}
+        Volume weighted average spread of recent 5 trading days: ${:<10.4f}
+        Volume weighted average spread of recent 20 trading days: ${:<10.4f}
         
         SPY 5-tick momentum index of last trading day: {:<10.4f}
         """.format(spread_last, spread_last_5, spread_last_20, self.spy_accuracy(self.__spy_df.price, 0.05))
