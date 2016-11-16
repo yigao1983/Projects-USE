@@ -89,8 +89,6 @@ class Broadcaster(object):
             self.__tq_df = self.__tq_df[self.__tq_df.spread<self.__tq_df.spread.quantile(0.99)]
             self.__tq_df = pd.merge(self.__sym_df, self.__tq_df, left_on='symbol', right_index=True)
             
-            self.__tq_df.to_csv('tq_df.csv')
-            
             return np.average(self.__tq_df.spread, weights=self.__tq_df.volume)
         
         except Exception as e:
@@ -190,6 +188,7 @@ class Broadcaster(object):
         Volume weighted average spread of last trading day: ${:<10.4f}
         Volume weighted average spread of recent 5 trading day: ${:<10.4f}
         Volume weighted average spread of recent 20 trading day: ${:<10.4f}
+        
         SPY 5-tick momentum index of last trading day: {:<10.4f}
         """.format(spread_last, spread_last_5, spread_last_20, self.spy_accuracy(self.__spy_df.price, 0.05))
         
