@@ -67,8 +67,8 @@ class TradeTicks(object):
                 self.__q.sync('date_now:date_beg;')
                 self.__q.sync('while[date_now<=date_end;'
                               'tab:.st.unenum select date,sym,sun_time,price from {} where date=date_now,sym=`{},'
-                              'sun_time>08:30:00,sun_time<15:00:00,flags="D";'
-                              'tab:.st.unenum select from tab where tab[i;`price]<>tab[i-1;`price];'
+                              'sun_time within (08:30:00.000000,15:00:00.000000),flags="D";')
+                self.__q.sync('tab:.st.unenum select from tab where tab[i;`price]<>tab[i-1;`price];'
                               'trade_tab:trade_tab,tab;'
                               'date_now:date_now+1;];`end;'.format(self.__trade, self.__sym))
                 

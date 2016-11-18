@@ -58,8 +58,9 @@ class TopTrades(object):
             self.__q.sync('date_beg:{};'.format(self.__date_beg))
             self.__q.sync('date_end:{};'.format(self.__date_end))
             self.__q.sync('trade_tab:.st.unenum select volume:sum size,notional:sum size*price,price:(size*price) wavg price '
-                          'by 1 xbar date,sym from {} where date within (date_beg,date_end),sun_time>08:30:00,sun_time<15:00:00,'
-                          'price>1,not sym like "*ZZT",not sym like "*.TEST",not sym in `CBO`CBX;'.format(self.__trades))
+                          'by 1 xbar date,sym from {} where date within (date_beg,date_end),'
+                          'sun_time within (08:30:00.000000,15:00:00.000000),'
+                          'price>1,price<1000,not sym like "*ZZT",not sym like "*.TEST",not sym in `CBO`CBX;'.format(self.__trades))
             self.__q.sync('sym_lst:distinct exec sym from `tot_notional xdesc .st.unenum select tot_notional:sum notional '
                           'by sym from trade_tab;')
             self.__q.sync('trade_tab:.st.unenum select from trade_tab where (sym) in (sym_lst);')
@@ -80,7 +81,8 @@ class TopTrades(object):
             self.__q.sync('date_end:{};'.format(self.__date_end))
             
             self.__q.sync('quote_tab:.st.unenum select spread:med ask_price-bid_price by date,sym from {} '
-                          'where date within (date_beg,date_end),sun_time>08:30:00,sun_time<15:00:00,'
+                          'where date within (date_beg,date_end),'
+                          'sun_time within (08:30:00.000000,15:00:00.000000),'
                           '(sym) in (sym_lst);'.format(self.__quotes))
             
             self.__qt_df = self.__q.sync('quote_tab', pandas=True)

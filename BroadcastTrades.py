@@ -60,11 +60,11 @@ class BroadcastTrades(object):
             self.__q.sync('last_date:last date;')
             self.__q.sync('trade_tab:.st.unenum select volume:sum size,price:size wavg price by sym from {} where date=last_date,'
                           'price>1,price<1000,'
-                          'sun_time within (08:30:00,15:00:00),not sym like "*ZZT",not sym like "*.TEST",'
+                          'sun_time within (08:30:00.000000,15:00:00.000000),not sym like "*ZZT",not sym like "*.TEST",'
                           'not sym in `CBO`CBX;'.format(self.__nbbo_trades))
             self.__q.sync('sym_lst:distinct exec sym from trade_tab;')
             self.__q.sync('quote_tab:.st.unenum select spread:med ask_price-bid_price by sym from {} where date=last_date,'
-                          'sun_time within (08:30:00,15:00:00),(sym) in (sym_lst);'.format(self.__nbbo_quotes))
+                          'sun_time within (08:30:00.000000,15:00:00.000000),(sym) in (sym_lst);'.format(self.__nbbo_quotes))
             self.__q.sync('tq_tab:ij[trade_tab;quote_tab]')
             
             self.__last_date = self.__q.sync('last_date')
@@ -99,7 +99,7 @@ class BroadcastTrades(object):
             self.__q.sync('\l {}'.format(self.__itch_database))
             self.__q.sync('last_date:last date')
             self.__q.sync('spy_tab:.st.unenum select sym,sun_time,price from {} where date=last_date,'
-                          'sym=`SPY,sun_time within (08:00:00,15:00:00),flags="D";'.format(self.__itch_trade))
+                          'sym=`SPY,sun_time within (08:30:00.000000,15:00:00.000000),flags="D";'.format(self.__itch_trade))
             self.__q.sync('spy_tab:.st.unenum select from spy_tab where spy_tab[i;`price]<>spy_tab[i-1;`price]')
             
             self.__last_date = self.__q.sync('last_date')
